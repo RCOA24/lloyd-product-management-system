@@ -7,6 +7,7 @@ A full-stack technical examination project for managing pharmaceutical product c
 ## Features
 
 - JWT-protected product CRUD
+- Login and CRUD Functionality
 - Search and category filtering
 - Product availability: **Available** or **Out of stock**
 - Out-of-stock products appear first in the product catalogue
