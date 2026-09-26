@@ -17,6 +17,7 @@ Thumbs.db
 # .NET build output and temporary files
 [Bb]in/
 [Oo]bj/
+artifacts/
 *.userprefs
 
 # Node.js dependencies and build output

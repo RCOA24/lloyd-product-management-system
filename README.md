@@ -22,6 +22,37 @@ A full-stack technical examination project for managing pharmaceutical product c
 - JWT bearer authentication
 - Git and GitHub
 
+## Exam requirements and implemented features
+
+### Technical requirements
+
+| Requirement | Implementation in this project |
+| --- | --- |
+| ReactJS and Ant Design | The `client/` application uses React, TypeScript, Vite, Ant Design, and Axios. |
+| ASP.NET Core or ExpressJS | The `server/` application is an ASP.NET Core Web API targeting .NET 10. |
+| Microsoft SQL Server | Entity Framework Core uses SQL Server LocalDB for the development database. |
+| RESTful API | Attribute-routed JSON endpoints provide login, categories, products, and reporting. |
+| Git and GitHub | Source is stored in Git and published at [RCOA24/lloyd-product-management-system](https://github.com/RCOA24/lloyd-product-management-system). |
+
+### Project specifications
+
+| Required feature | Where it is implemented |
+| --- | --- |
+| Login functionality | `POST /api/auth/login` validates the seeded user and issues a JWT; the React login screen stores the session token. |
+| CRUD functionality | Authenticated product endpoints support create, retrieve/list, update, and delete; the Products screen exposes these operations. |
+| Simple report | The summary endpoint aggregates product totals by category and dosage form; the UI can export CSV or print/save PDF. |
+| RESTful API | Products use `GET`, `POST`, `PUT`, and `DELETE` at `/api/products` and `/api/products/{id}` with conventional HTTP response codes. |
+
+### Feature-oriented Git history
+
+The repository uses focused commits to demonstrate development progress. Review the history with:
+
+```powershell
+git log --oneline
+```
+
+Examples include authentication, product create/retrieve/update/delete, search/filtering, reports, React integration, and product availability status.
+
 ## Repository structure
 
 ```text
@@ -147,6 +178,33 @@ Use the credentials from step 2, for example:
 Username: admin
 Password: replace-with-a-strong-local-password
 ```
+
+### 7. Test the application through the user interface
+
+After signing in, complete this checklist in the browser:
+
+1. Open **Products** and confirm that the six rows labelled **Out of stock** appear before the available products.
+2. Use the search box to find a seeded product such as `Ibuprofen`; use the category selector and **Clear** button to verify filtering.
+3. Select **Add product** and create a record with a unique product name, a valid category, dosage form, and **Available** status. Confirm it appears in the table.
+4. Click **Edit** for the product you created. Change its availability to **Out of stock**, save it, and confirm that it moves to the top group with the out-of-stock pill.
+5. Click **Delete** for the same test product and confirm the deletion. Verify that it no longer appears after the table refreshes.
+6. Open **Reports**, confirm that the summary values load, then use the CSV export and Print / PDF controls.
+7. Refresh the page and confirm the logged-in session remains usable. Restarting the API invalidates the session only when no persistent `Jwt__Key` was supplied.
+
+### 8. Test the REST API directly (optional)
+
+Use the PowerShell smoke-test commands in [API smoke test with PowerShell](#api-smoke-test-with-powershell). The expected outcomes are:
+
+| Action | Expected result |
+| --- | --- |
+| `POST /api/auth/login` with the seeded credentials | `200 OK` and a JWT access token |
+| `GET /api/categories` | `200 OK` and active categories |
+| `GET /api/products` with a bearer token | `200 OK`; out-of-stock products are returned first |
+| `POST /api/products` with valid data | `201 Created` |
+| `PUT /api/products/{id}` with valid data | `200 OK` |
+| `DELETE /api/products/{id}` | `204 No Content` |
+| Protected endpoint without/with invalid token | `401 Unauthorized` |
+| Invalid product data or availability status | `400 Bad Request` |
 
 ## Database and seeded data
 
@@ -325,6 +383,14 @@ npm run build
 Set-Location ..
 dotnet build .\Lloyd.ProductManagement.sln
 ```
+
+## Challenges encountered during development
+
+1. **Separating catalogue activity from stock availability** — The original product-table pill was hard-coded as `Active`, while the existing `IsActive` field controls whether a catalogue record is listed. Adding `AvailabilityStatus` kept catalogue visibility separate from the inventory-style `Available` / `OutOfStock` state.
+2. **Coordinating a full-stack schema change** — Availability required matching updates to the SQL Server schema migration, EF Core model and configuration, request/response DTOs, validation, API projections, React types, modal form, table renderer, and CSS pills.
+3. **Safe, repeatable demonstration data** — The seeder needed to add available and out-of-stock examples without duplicating them on every startup. It therefore checks product names before inserting; this makes seeding idempotent but intentionally does not overwrite an existing record.
+4. **Local API/frontend integration** — The React app and API run on different development ports. Vite’s `/api` proxy provides a same-origin browser path and supports the local ASP.NET HTTPS certificate; HTTP-only API mode requires the documented local proxy override.
+5. **Locked build output during development** — An active API/debugger process can lock the server output assemblies. Stop the existing process before a normal build, or use a separate validation output directory; generated output is excluded from Git via `.gitignore`.
 
 ## Scope and limitations
 
