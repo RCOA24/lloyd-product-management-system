@@ -85,6 +85,59 @@ public sealed class ProductsController : ControllerBase
         return Created($"/api/products/{product.Id}", response);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<List<ProductResponse>>> GetProducts(
+        CancellationToken cancellationToken)
+    {
+        var products = await ProjectProducts(_context.Products
+                .AsNoTracking()
+                .Where(product => product.IsActive)
+                .OrderBy(product => product.ProductName))
+            .ToListAsync(cancellationToken);
+
+        return Ok(products);
+    }
+
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<ProductResponse>> GetProduct(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var product = await ProjectProducts(_context.Products
+                .AsNoTracking()
+                .Where(item => item.Id == id && item.IsActive))
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (product is null)
+        {
+            return NotFound(new
+            {
+                message = "Product not found."
+            });
+        }
+
+        return Ok(product);
+    }
+
+    private static IQueryable<ProductResponse> ProjectProducts(
+        IQueryable<Product> products)
+    {
+        return products.Select(product => new ProductResponse
+        {
+            Id = product.Id,
+            ProductName = product.ProductName,
+            GenericName = product.GenericName,
+            CategoryId = product.CategoryId,
+            CategoryName = product.Category.Name,
+            DosageForm = product.DosageForm,
+            Strength = product.Strength,
+            Description = product.Description,
+            IsActive = product.IsActive,
+            CreatedAt = product.CreatedAt,
+            UpdatedAt = product.UpdatedAt
+        });
+    }
+
     private static string? NormalizeOptional(string? value)
     {
         return string.IsNullOrWhiteSpace(value)
