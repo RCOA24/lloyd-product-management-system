@@ -136,14 +136,14 @@ function LoginScreen({ onLogin }: { onLogin: (response: LoginResponse) => void }
             name="username"
             rules={[{ required: true, message: 'Enter your username.' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Username" size="large" />
+            <Input prefix={<UserOutlined />} placeholder="Username" size="large" autoComplete="username" />
           </Form.Item>
           <Form.Item
             label="Password"
             name="password"
             rules={[{ required: true, message: 'Enter your password.' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" autoComplete="current-password" />
           </Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} block size="large">
             Sign in

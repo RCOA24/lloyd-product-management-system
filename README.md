@@ -141,13 +141,21 @@ Open the Vite development URL shown in the terminal, normally:
 http://localhost:5173
 ```
 
-The Vite development server proxies `/api` requests to:
+The Vite development server proxies `/api` requests to the HTTPS backend by default:
 
 ```text
-http://localhost:5240
+https://localhost:7095
 ```
 
-This keeps local browser requests same-origin and avoids requiring a separate development CORS configuration.
+The proxy accepts the local ASP.NET Core development certificate and keeps the browser request same-origin at `http://localhost:5173`. This avoids a browser cross-origin preflight when ASP.NET Core redirects HTTP traffic to HTTPS.
+
+If you intentionally run the backend with the HTTP-only profile, create a local uncommitted file at `client/.env.local`:
+
+```text
+VITE_API_PROXY_TARGET=http://localhost:5240
+```
+
+Do not commit local environment files. The application does not log login request bodies or store the password in browser storage. Browser DevTools can still display a request payload because the browser owner can inspect their own network traffic; HTTPS protects the payload while it travels between the client and server.
 
 Frontend validation commands:
 
