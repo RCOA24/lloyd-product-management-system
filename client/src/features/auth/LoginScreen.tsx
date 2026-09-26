@@ -43,7 +43,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         <BrandLockup />
         <div className="login-story__content">
           <Tag color="cyan">Independent technical project</Tag>
-          <Title>Quality information, clearly managed.</Title>
+          <Title>Clear product data. Confident decisions.</Title>
           <Paragraph className="login-story-description">
             A focused workspace for maintaining pharmaceutical product records,
             monitoring categories, and generating useful inventory summaries.
