@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "I/b6b76mu9o=",
+  "success": true,
+  "projectFilePath": "S:\\VSCodeProjects\\LloydLaboratories-ProductManagement\\lloyd-product-management-system\\server\\Lloyd.ProductManagement.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\rodne\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.12\\microsoft.aspnetcore.openapi.10.0.12.nupkg.sha512",
+    "C:\\Users\\rodne\\.nuget\\packages\\microsoft.openapi\\2.12.0\\microsoft.openapi.2.12.0.nupkg.sha512"
+  ],
+  "logs": []
+}
