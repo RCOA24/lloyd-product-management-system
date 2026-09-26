@@ -161,12 +161,29 @@ public sealed class ProductsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<List<ProductResponse>>> GetProducts(
+        [FromQuery] string? search,
+        [FromQuery] int? categoryId,
         CancellationToken cancellationToken)
     {
-        var products = await ProjectProducts(_context.Products
-                .AsNoTracking()
-                .Where(product => product.IsActive)
-                .OrderBy(product => product.ProductName))
+        var query = _context.Products
+            .AsNoTracking()
+            .Where(product => product.IsActive);
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(product => product.CategoryId == categoryId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchTerm = search.Trim();
+            query = query.Where(product =>
+                product.ProductName.Contains(searchTerm) ||
+                (product.GenericName != null && product.GenericName.Contains(searchTerm)) ||
+                product.DosageForm.Contains(searchTerm));
+        }
+
+        var products = await ProjectProducts(query.OrderBy(product => product.ProductName))
             .ToListAsync(cancellationToken);
 
         return Ok(products);
