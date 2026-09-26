@@ -259,7 +259,9 @@ Returns server-side aggregations for:
 - Products by category
 - Products by dosage form
 
-The report requires a bearer token.
+The report requires a bearer token. In the React interface, users can export the generated snapshot as a spreadsheet-compatible CSV file or use **Print / PDF** to print it or save it as a PDF through the browser.
+
+Report import is intentionally not included. A report is a generated output, so importing it would not update authoritative product records. A future product-data import would be a separate feature with validation, duplicate handling, and an audit trail.
 
 ## Testing the API with PowerShell
 
