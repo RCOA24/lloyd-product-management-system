@@ -24,6 +24,8 @@ export interface Category {
   description?: string
 }
 
+export type ProductAvailabilityStatus = 'Available' | 'OutOfStock'
+
 export interface Product {
   id: number
   productName: string
@@ -33,6 +35,7 @@ export interface Product {
   dosageForm: string
   strength?: string
   description?: string
+  availabilityStatus: ProductAvailabilityStatus
   isActive: boolean
   createdAt: string
   updatedAt?: string
@@ -45,6 +48,7 @@ export interface ProductWriteRequest {
   dosageForm: string
   strength?: string
   description?: string
+  availabilityStatus?: ProductAvailabilityStatus
 }
 
 export interface NamedCount {

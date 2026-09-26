@@ -48,6 +48,11 @@ public sealed class ProductsController : ControllerBase
             ModelState.AddModelError(nameof(request.DosageForm), "Dosage form is required.");
         }
 
+        if (!IsValidAvailabilityStatus(request.AvailabilityStatus))
+        {
+            ModelState.AddModelError(nameof(request.AvailabilityStatus), "Availability status must be Available or OutOfStock.");
+        }
+
         if (!ModelState.IsValid)
         {
             return ValidationProblem(ModelState);
@@ -61,6 +66,7 @@ public sealed class ProductsController : ControllerBase
             DosageForm = request.DosageForm.Trim(),
             Strength = NormalizeOptional(request.Strength),
             Description = NormalizeOptional(request.Description),
+            AvailabilityStatus = NormalizeAvailabilityStatus(request.AvailabilityStatus),
             IsActive = true
         };
 
@@ -77,6 +83,7 @@ public sealed class ProductsController : ControllerBase
             DosageForm = product.DosageForm,
             Strength = product.Strength,
             Description = product.Description,
+            AvailabilityStatus = product.AvailabilityStatus,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,
             UpdatedAt = product.UpdatedAt
@@ -99,6 +106,11 @@ public sealed class ProductsController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.DosageForm))
         {
             ModelState.AddModelError(nameof(request.DosageForm), "Dosage form is required.");
+        }
+
+        if (!IsValidAvailabilityStatus(request.AvailabilityStatus))
+        {
+            ModelState.AddModelError(nameof(request.AvailabilityStatus), "Availability status must be Available or OutOfStock.");
         }
 
         if (!ModelState.IsValid)
@@ -139,6 +151,7 @@ public sealed class ProductsController : ControllerBase
         product.DosageForm = request.DosageForm.Trim();
         product.Strength = NormalizeOptional(request.Strength);
         product.Description = NormalizeOptional(request.Description);
+        product.AvailabilityStatus = NormalizeAvailabilityStatus(request.AvailabilityStatus);
         product.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -153,6 +166,7 @@ public sealed class ProductsController : ControllerBase
             DosageForm = product.DosageForm,
             Strength = product.Strength,
             Description = product.Description,
+            AvailabilityStatus = product.AvailabilityStatus,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,
             UpdatedAt = product.UpdatedAt
@@ -183,7 +197,9 @@ public sealed class ProductsController : ControllerBase
                 product.DosageForm.Contains(searchTerm));
         }
 
-        var products = await ProjectProducts(query.OrderBy(product => product.ProductName))
+        var products = await ProjectProducts(
+                query.OrderBy(product => product.AvailabilityStatus == "OutOfStock" ? 0 : 1)
+                    .ThenBy(product => product.ProductName))
             .ToListAsync(cancellationToken);
 
         return Ok(products);
@@ -247,10 +263,24 @@ public sealed class ProductsController : ControllerBase
             DosageForm = product.DosageForm,
             Strength = product.Strength,
             Description = product.Description,
+            AvailabilityStatus = product.AvailabilityStatus,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,
             UpdatedAt = product.UpdatedAt
         });
+    }
+
+    private static bool IsValidAvailabilityStatus(string? value)
+    {
+        return string.Equals(value, "Available", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(value, "OutOfStock", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeAvailabilityStatus(string? value)
+    {
+        return string.Equals(value, "OutOfStock", StringComparison.OrdinalIgnoreCase)
+            ? "OutOfStock"
+            : "Available";
     }
 
     private static string? NormalizeOptional(string? value)

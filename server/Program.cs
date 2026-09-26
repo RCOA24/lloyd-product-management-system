@@ -85,6 +85,8 @@ using (var scope = app.Services.CreateScope())
     var passwordHasher = scope.ServiceProvider
         .GetRequiredService<IPasswordHasher<User>>();
 
+    await dbContext.Database.MigrateAsync();
+
     await DbSeeder.SeedAsync(
         dbContext,
         builder.Configuration,

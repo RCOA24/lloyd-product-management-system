@@ -16,6 +16,8 @@ public class Product
 
     public string? Description { get; set; }
 
+    public string AvailabilityStatus { get; set; } = "Available";
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedAt { get; set; }

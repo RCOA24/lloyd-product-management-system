@@ -73,29 +73,35 @@ public static class DbSeeder
 
         // Generic pharmaceutical entries are adapted from the public Lloyd Laboratories
         // product-capability page for demonstration purposes; they are not official SKUs.
-        var productSeeds = new (string ProductName, string CategoryName)[]
+        var productSeeds = new (string ProductName, string CategoryName, string AvailabilityStatus)[]
         {
-            ("Ibuprofen", "Analgesic"),
-            ("Paracetamol", "Analgesic"),
-            ("Tramadol", "Analgesic"),
-            ("Mefenamic Acid", "Analgesic"),
-            ("Naproxen", "Analgesic"),
-            ("Amoxicillin", "Anti-Infective"),
-            ("Ampicillin", "Anti-Infective"),
-            ("Co-Amoxiclav", "Anti-Infective"),
-            ("Ciprofloxacin", "Anti-Infective"),
-            ("Doxycycline Hyclate", "Anti-Infective"),
-            ("Metronidazole", "Anti-Infective"),
-            ("Fluconazole", "Antifungal"),
-            ("Ketoconazole", "Antifungal"),
-            ("Miconazole", "Antifungal"),
-            ("Chlorphenamine Maleate", "Antihistamine"),
-            ("Diphenhydramine HCl", "Antihistamine"),
-            ("Loratadine", "Antihistamine"),
-            ("Ascorbic Acid", "Vitamin"),
-            ("Calcium Ascorbate", "Vitamin"),
-            ("Multivitamins", "Vitamin"),
-            ("Natural Vitamin E", "Vitamin")
+            ("Ibuprofen", "Analgesic", "Available"),
+            ("Paracetamol", "Analgesic", "Available"),
+            ("Tramadol", "Analgesic", "Available"),
+            ("Mefenamic Acid", "Analgesic", "Available"),
+            ("Naproxen", "Analgesic", "Available"),
+            ("Amoxicillin", "Anti-Infective", "Available"),
+            ("Ampicillin", "Anti-Infective", "Available"),
+            ("Co-Amoxiclav", "Anti-Infective", "Available"),
+            ("Ciprofloxacin", "Anti-Infective", "Available"),
+            ("Doxycycline Hyclate", "Anti-Infective", "Available"),
+            ("Metronidazole", "Anti-Infective", "Available"),
+            ("Fluconazole", "Antifungal", "Available"),
+            ("Ketoconazole", "Antifungal", "Available"),
+            ("Miconazole", "Antifungal", "Available"),
+            ("Chlorphenamine Maleate", "Antihistamine", "Available"),
+            ("Diphenhydramine HCl", "Antihistamine", "Available"),
+            ("Loratadine", "Antihistamine", "Available"),
+            ("Ascorbic Acid", "Vitamin", "Available"),
+            ("Calcium Ascorbate", "Vitamin", "Available"),
+            ("Multivitamins", "Vitamin", "Available"),
+            ("Natural Vitamin E", "Vitamin", "Available"),
+            ("Demo Product - Out of Stock", "Analgesic", "OutOfStock"),
+            ("Demo Antibiotic - Out of Stock", "Anti-Infective", "OutOfStock"),
+            ("Demo Antifungal - Out of Stock", "Antifungal", "OutOfStock"),
+            ("Demo Antihistamine - Out of Stock", "Antihistamine", "OutOfStock"),
+            ("Demo Vitamin - Out of Stock", "Vitamin", "OutOfStock"),
+            ("Demo Other Product - Out of Stock", "Other", "OutOfStock")
         };
 
         var products = productSeeds
@@ -107,6 +113,7 @@ public static class DbSeeder
                 CategoryId = categoryIds[seed.CategoryName],
                 DosageForm = "Not specified",
                 Description = "Publicly listed generic entry included as technical-exam demonstration data.",
+                AvailabilityStatus = seed.AvailabilityStatus,
                 IsActive = true
             })
             .ToList();

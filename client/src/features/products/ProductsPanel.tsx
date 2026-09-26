@@ -106,7 +106,16 @@ export function ProductsPanel({ categories, categoryError }: ProductsPanelProps)
       responsive: ['md'],
       render: (_, product) => <span>{product.dosageForm}{product.strength ? ` · ${product.strength}` : ''}</span>,
     },
-    { title: 'Status', key: 'status', responsive: ['sm'], render: () => <Tag color="success">Active</Tag> },
+    {
+      title: 'Status',
+      key: 'status',
+      responsive: ['sm'],
+      render: (_, product) => (
+        <Tag className={product.availabilityStatus === 'OutOfStock' ? 'out-of-stock-status-pill' : 'available-status-pill'}>
+          {product.availabilityStatus === 'OutOfStock' ? 'Out of stock' : 'Available'}
+        </Tag>
+      ),
+    },
     {
       title: 'Actions',
       key: 'actions',
@@ -160,7 +169,7 @@ export function ProductsPanel({ categories, categoryError }: ProductsPanelProps)
       <Card bordered={false} className="panel-card">
         <div className="panel-heading">
           <div>
-            <Title level={3}>Active products</Title>
+            <Title level={3}>Product catalogue</Title>
             <Text type="secondary" aria-live="polite">{products.length} record{products.length === 1 ? '' : 's'} found</Text>
           </div>
           <Button

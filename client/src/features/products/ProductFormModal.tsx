@@ -35,8 +35,9 @@ export function ProductFormModal({
             dosageForm: product.dosageForm,
             strength: product.strength,
             description: product.description,
+            availabilityStatus: product.availabilityStatus,
           }
-        : { categoryId: categories[0]?.id },
+        : { categoryId: categories[0]?.id, availabilityStatus: 'Available' },
     )
   }, [categories, form, open, product])
 
@@ -80,6 +81,9 @@ export function ProductFormModal({
         </Row>
         <Form.Item name="strength" label="Strength" rules={[{ max: 100 }]}>
           <Input maxLength={100} placeholder="For example, 500 mg" />
+        </Form.Item>
+        <Form.Item name="availabilityStatus" label="Availability">
+          <Select options={[{ label: 'Available', value: 'Available' }, { label: 'Out of stock', value: 'OutOfStock' }]} />
         </Form.Item>
         <Form.Item name="description" label="Description" rules={[{ max: 1000 }]}>
           <Input.TextArea rows={4} maxLength={1000} showCount />

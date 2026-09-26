@@ -104,6 +104,11 @@ public class ApplicationDbContext : DbContext
         entity.Property(x => x.Description)
             .HasMaxLength(1000);
 
+        entity.Property(x => x.AvailabilityStatus)
+            .HasMaxLength(20)
+            .HasDefaultValue("Available")
+            .IsRequired();
+
         entity.HasOne(x => x.Category)
             .WithMany(x => x.Products)
             .HasForeignKey(x => x.CategoryId)

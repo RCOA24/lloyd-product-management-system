@@ -1,54 +1,52 @@
 # Lloyd Product Management System
 
-A technical examination project for managing pharmaceutical products. The application uses a pharmaceutical product-management domain inspired by the publicly available business domain of Lloyd Laboratories.
+A full-stack technical examination project for managing pharmaceutical product catalogue records. It is inspired by the public Lloyd Laboratories business domain.
 
-> This is **not** an official Lloyd Laboratories application. It does not represent Lloyd Laboratories' internal systems, workflows, databases, products, or business processes.
+> This is **not** an official Lloyd Laboratories application. It does not represent Lloyd Laboratories' internal systems, workflows, databases, products, or business processes. All seeded product records are demonstration data, not official SKUs or stock data.
+
+## Features
+
+- JWT-protected product CRUD
+- Search and category filtering
+- Product availability: **Available** or **Out of stock**
+- Out-of-stock products appear first in the product catalogue
+- Category and product summary reporting, CSV export, and browser print/PDF
+- Automatic Entity Framework Core database migrations and idempotent demo-data seeding on API startup
+- React + Ant Design frontend with a Vite API proxy
 
 ## Technology stack
 
-- ReactJS with TypeScript and Vite
-- Ant Design
-- Axios
+- React, TypeScript, Vite, Ant Design, Axios
 - ASP.NET Core Web API targeting .NET 10
-- Entity Framework Core
-- Microsoft SQL Server LocalDB
-- Controller-based REST API
+- Entity Framework Core and SQL Server LocalDB
+- JWT bearer authentication
 - Git and GitHub
 
 ## Repository structure
 
 ```text
 lloyd-product-management-system/
-├── client/                         React frontend
-├── server/                         ASP.NET Core backend
-├── Lloyd.ProductManagement.sln     Repository-root Visual Studio solution
-├── .gitignore
+├── client/                              React frontend
+├── server/                              ASP.NET Core backend
+│   ├── Lloyd.ProductManagement.Api.csproj
+│   └── Migrations/                      EF Core schema history
+├── Lloyd.ProductManagement.sln          Visual Studio solution
 └── README.md
 ```
 
-The backend project is located at:
-
-```text
-server/Lloyd.ProductManagement.Api.csproj
-```
-
-Always open the repository-root solution rather than an old Visual Studio project session:
-
-```text
-Lloyd.ProductManagement.sln
-```
+Open `Lloyd.ProductManagement.sln` when using Visual Studio.
 
 ## Prerequisites
 
-Install the following on Windows:
+This guide is written for Windows and PowerShell. Install:
 
-- .NET 10 SDK
-- Node.js and npm
-- SQL Server LocalDB (`(localdb)\MSSQLLocalDB`)
-- Visual Studio or VS Code with C# support
-- Git
+1. [.NET 10 SDK](https://dotnet.microsoft.com/download)
+2. [Node.js LTS](https://nodejs.org/) (includes npm)
+3. SQL Server LocalDB, using the default `(localdb)\MSSQLLocalDB` instance
+4. Git
+5. Optionally, Visual Studio or VS Code with C# support
 
-Verify the tools:
+Verify the command-line tools from the repository root:
 
 ```powershell
 dotnet --version
@@ -57,142 +55,175 @@ npm --version
 git --version
 ```
 
-## Database configuration
+The API project targets `net10.0`. If `dotnet --version` does not report a compatible .NET 10 SDK, install it before continuing.
 
-The development database uses SQL Server LocalDB and Windows authentication:
+## Run from a clean clone
 
-```text
-Server=(localdb)\MSSQLLocalDB
-Database=LloydProductManagementDb
-Trusted_Connection=True
-TrustServerCertificate=True
+### 1. Clone and restore dependencies
+
+```powershell
+git clone https://github.com/RCOA24/lloyd-product-management-system.git
+Set-Location .\lloyd-product-management-system
+
+dotnet restore .\Lloyd.ProductManagement.sln
+Set-Location .\client
+npm ci
+Set-Location ..
 ```
 
-The connection string is in `server/appsettings.json`. It does not contain a database password. Do not add database passwords, JWT signing keys, or other secrets to committed configuration files.
+`npm ci` installs the exact frontend dependency versions recorded in `client/package-lock.json`. If you intentionally change dependencies, use `npm install` instead.
 
-The existing `InitialCreate` migration defines the Users, Categories, and Products tables. Do not delete or recreate that migration.
+### 2. Configure a development administrator
 
-On startup, the development seeder adds category reference data and a limited set of generic pharmaceutical entries adapted from the public [Lloyd Laboratories products page](https://lloydlab.com/products/). These records are demonstration data only—not official SKUs, formulations, strengths, or internal product records. Missing source details such as dosage form are explicitly stored as `Not specified`, and seeding is idempotent by product name.
+Before the **first** backend start, set these environment variables in the PowerShell terminal that will run the API:
 
-For a fresh database, apply the existing migrations from the repository root:
+```powershell
+$env:SeedAdmin__Username = "admin"
+$env:SeedAdmin__Password = "replace-with-a-strong-local-password"
+$env:Jwt__Key = "replace-this-with-at-least-32-random-characters"
+```
+
+- The seed creates an administrator only when both `SeedAdmin__*` values are set and the `Users` table is empty.
+- The password is stored as an ASP.NET Core password hash; no plaintext password is committed.
+- `Jwt__Key` is optional in Development. Without it, the API creates a temporary key at startup, which invalidates login tokens after every restart. Supplying a local value keeps tokens valid across restarts.
+- Do **not** commit passwords, JWT keys, or `.env.local` files.
+
+### 3. Start the backend
+
+The easiest path is the HTTPS profile, because the frontend proxies to it by default:
+
+```powershell
+dotnet run --project .\server\Lloyd.ProductManagement.Api.csproj --launch-profile https
+```
+
+Expected API URLs:
+
+```text
+https://localhost:7095
+http://localhost:5240
+```
+
+On its first successful start, the API automatically:
+
+1. Connects to `(localdb)\MSSQLLocalDB`.
+2. Creates or migrates the `LloydProductManagementDb` database using all EF Core migrations.
+3. Seeds categories, standard available demo products, and six out-of-stock demo products.
+4. Seeds the administrator configured in step 2 when no users exist.
+
+No separate `dotnet ef database update` command is needed during normal startup. To apply migrations manually instead, run:
 
 ```powershell
 dotnet ef database update --project .\server\Lloyd.ProductManagement.Api.csproj
 ```
 
-If the `dotnet ef` command is unavailable, install or use the EF Core CLI tool appropriate for the installed .NET SDK.
+### 4. Trust the local HTTPS certificate if needed
 
-## Backend setup and run
+If the HTTPS API profile fails due to a development certificate problem, run once in an elevated or normal developer PowerShell as appropriate:
+
+```powershell
+dotnet dev-certs https --trust
+```
+
+Then stop and restart the API.
+
+### 5. Start the frontend
+
+Open a second PowerShell terminal in the repository root:
+
+```powershell
+Set-Location .\client
+npm run dev
+```
+
+Open the Vite URL printed in the terminal, normally `http://localhost:5173`.
+
+The browser sends requests to `/api`; Vite proxies them to `https://localhost:7095`. This is the intended local-development configuration and avoids requiring a broad API CORS policy.
+
+### 6. Sign in
+
+Use the credentials from step 2, for example:
+
+```text
+Username: admin
+Password: replace-with-a-strong-local-password
+```
+
+## Database and seeded data
+
+The committed development connection string is in `server/appsettings.json`:
+
+```text
+Server=(localdb)\MSSQLLocalDB;Database=LloydProductManagementDb;Trusted_Connection=True;TrustServerCertificate=True
+```
+
+It uses Windows authentication and contains no password. The availability migration adds a required `Products.AvailabilityStatus` column whose default is `Available`, so existing rows receive `Available` when the migration is applied.
+
+The seeder is **idempotent by product name**: it adds missing records but does not overwrite records that already exist. A new database receives standard generic entries plus these six `OutOfStock` demonstration records:
+
+- Demo Product - Out of Stock
+- Demo Antibiotic - Out of Stock
+- Demo Antifungal - Out of Stock
+- Demo Antihistamine - Out of Stock
+- Demo Vitamin - Out of Stock
+- Demo Other Product - Out of Stock
+
+The API returns out-of-stock records before available records, then sorts alphabetically within each group.
+
+## Backend commands
 
 From the repository root:
 
 ```powershell
-dotnet restore .\Lloyd.ProductManagement.sln
 dotnet build .\Lloyd.ProductManagement.sln
+dotnet run --project .\server\Lloyd.ProductManagement.Api.csproj --launch-profile https
 ```
 
-For local development, configure a development admin user before the first run if the Users table is empty. These values are process environment variables and are not committed:
+The API has no root (`/`) route. Use `https://localhost:7095/api/categories` to confirm that it is responding.
 
-```powershell
-$env:SeedAdmin__Username = "admin"
-$env:SeedAdmin__Password = "replace-with-a-local-development-password"
-$env:Jwt__Key = "replace-with-at-least-32-random-characters"
-```
-
-A development JWT key is generated automatically when `Jwt__Key` is omitted. Supplying a local key makes tokens remain valid across application restarts. In non-Development environments, `Jwt:Key` must be configured externally.
-
-Start the HTTP profile:
+To run the HTTP-only profile instead:
 
 ```powershell
 dotnet run --project .\server\Lloyd.ProductManagement.Api.csproj --launch-profile http
 ```
 
-The expected local URL is:
-
-```text
-http://localhost:5240
-```
-
-The API does not define a root `/` endpoint. Use a specific API route such as:
-
-```text
-http://localhost:5240/api/categories
-```
-
-The HTTPS profile is also available:
-
-```text
-https://localhost:7095
-```
-
-Use only one backend process at a time. If port 5240 is already in use, stop the existing API process or use it instead of starting a second copy.
-
-## Frontend setup and run
-
-In a second terminal:
-
-```powershell
-Set-Location .\client
-npm install
-npm run dev
-```
-
-Open the Vite development URL shown in the terminal, normally:
-
-```text
-http://localhost:5173
-```
-
-The Vite development server proxies `/api` requests to the HTTPS backend by default:
-
-```text
-https://localhost:7095
-```
-
-The proxy accepts the local ASP.NET Core development certificate and keeps the browser request same-origin at `http://localhost:5173`. This avoids a browser cross-origin preflight when ASP.NET Core redirects HTTP traffic to HTTPS.
-
-If you intentionally run the backend with the HTTP-only profile, create a local uncommitted file at `client/.env.local`:
+When using HTTP-only mode, create an uncommitted `client/.env.local` file with:
 
 ```text
 VITE_API_PROXY_TARGET=http://localhost:5240
 ```
 
-Do not commit local environment files. The application does not log login request bodies or store the password in browser storage. Browser DevTools can still display a request payload because the browser owner can inspect their own network traffic; HTTPS protects the payload while it travels between the client and server.
+Restart Vite after creating or changing this file. Run only one API process at a time.
 
-Frontend validation commands:
+## Frontend commands
 
 ```powershell
+Set-Location .\client
 npm run lint
 npm run build
+npm run dev
 ```
 
-## Authentication
+## REST API
 
-### Login
+### Authentication
 
 ```http
 POST /api/auth/login
 Content-Type: application/json
 ```
 
-Request:
-
 ```json
 {
   "username": "admin",
-  "password": "your-development-password"
+  "password": "your-local-development-password"
 }
 ```
 
-A successful response returns a JWT access token and safe user information. Send the token on protected endpoints:
+A successful login returns a JWT access token. Send it to protected endpoints:
 
 ```http
 Authorization: Bearer <access-token>
 ```
-
-Passwords are stored using ASP.NET password hashing. Plaintext passwords and JWT signing keys are not stored in the repository.
-
-## REST API
 
 ### Categories
 
@@ -200,7 +231,7 @@ Passwords are stored using ASP.NET password hashing. Plaintext passwords and JWT
 GET /api/categories
 ```
 
-Returns active categories ordered by name. This endpoint is currently public.
+Returns active categories ordered by name. This endpoint is public.
 
 ### Products
 
@@ -214,15 +245,13 @@ PUT    /api/products/{id}
 DELETE /api/products/{id}
 ```
 
-Product list filtering:
+Optional list filters:
 
 ```http
 GET /api/products?search=tablet&categoryId=1
 ```
 
-The list endpoint searches ProductName, GenericName, and DosageForm. It returns active products ordered by ProductName.
-
-Create/update request example:
+Create or update payload example:
 
 ```json
 {
@@ -231,21 +260,12 @@ Create/update request example:
   "categoryId": 1,
   "dosageForm": "Tablet",
   "strength": "500 mg",
-  "description": "Example product description."
+  "description": "Example product description.",
+  "availabilityStatus": "Available"
 }
 ```
 
-Expected status behavior:
-
-- `POST` valid product: `201 Created`
-- `GET` existing product: `200 OK`
-- `GET` missing product: `404 Not Found`
-- `PUT` valid product: `200 OK`
-- `PUT` missing product: `404 Not Found`
-- `DELETE` valid product: `204 No Content`
-- `DELETE` missing product: `404 Not Found`
-- Invalid request: `400 Bad Request`
-- Missing/invalid authentication: `401 Unauthorized`
+Allowed availability values are `Available` and `OutOfStock`. The API accepts them case-insensitively and returns the normalized value. Invalid values return `400 Bad Request`.
 
 ### Product summary report
 
@@ -253,28 +273,18 @@ Expected status behavior:
 GET /api/reports/products/summary
 ```
 
-Returns server-side aggregations for:
+The report requires a bearer token and returns total, active/inactive, category, and dosage-form counts. In the React UI, export the snapshot as CSV or use **Print / PDF** to save through the browser.
 
-- Total products
-- Active products
-- Inactive products
-- Products by category
-- Products by dosage form
+## API smoke test with PowerShell
 
-The report requires a bearer token. In the React interface, users can export the generated snapshot as a spreadsheet-compatible CSV file or use **Print / PDF** to print it or save it as a PDF through the browser.
-
-Report import is intentionally not included. A report is a generated output, so importing it would not update authoritative product records. A future product-data import would be a separate feature with validation, duplicate handling, and an audit trail.
-
-## Testing the API with PowerShell
-
-Start the backend first, then run:
+After starting the HTTP profile and configuring the matching client/proxy as needed:
 
 ```powershell
 $baseUrl = "http://localhost:5240"
 
 $loginBody = @{
   username = "admin"
-  password = "your-development-password"
+  password = "your-local-development-password"
 } | ConvertTo-Json
 
 $login = Invoke-RestMethod `
@@ -283,9 +293,7 @@ $login = Invoke-RestMethod `
   -ContentType "application/json" `
   -Body $loginBody
 
-$headers = @{
-  Authorization = "Bearer $($login.accessToken)"
-}
+$headers = @{ Authorization = "Bearer $($login.accessToken)" }
 
 Invoke-RestMethod "$baseUrl/api/categories"
 Invoke-RestMethod "$baseUrl/api/products" -Headers $headers
@@ -293,89 +301,31 @@ Invoke-RestMethod "$baseUrl/api/products?search=tablet" -Headers $headers
 Invoke-RestMethod "$baseUrl/api/reports/products/summary" -Headers $headers
 ```
 
-Create a product:
+## Troubleshooting
+
+| Symptom | Cause and resolution |
+| --- | --- |
+| `dotnet` cannot target `net10.0` | Install the .NET 10 SDK and reopen the terminal. |
+| API fails before it starts | Confirm SQL Server LocalDB is installed and that your Windows account can access `(localdb)\MSSQLLocalDB`. Database migration runs before the API begins serving requests. |
+| HTTPS API/certificate error | Run `dotnet dev-certs https --trust`, then restart the API. |
+| Frontend cannot reach `/api` | Start the HTTPS backend profile, or set `VITE_API_PROXY_TARGET=http://localhost:5240` in ignored `client/.env.local` when using HTTP-only mode; restart Vite afterwards. |
+| Login returns `401 Unauthorized` | Confirm the seeded username/password. If a user already exists, changing `SeedAdmin__*` will not reset that user; use the original credentials or intentionally recreate the local development database. |
+| Existing token suddenly stops working | Set a persistent local `Jwt__Key`; otherwise Development generates a new temporary key each API restart. |
+| A second API start fails or a build cannot copy output files | Stop the already-running API/debug session first. Only one process can own the ports and output assemblies at a time. |
+| A new seed is not appearing | Seeds add records only when their product name is missing; they do not update existing records. Restart the API to run the seed check. |
+
+## Validation
+
+Run before committing changes:
 
 ```powershell
-$productBody = @{
-  productName = "Example Product"
-  genericName = "Example Generic"
-  categoryId = 1
-  dosageForm = "Tablet"
-  strength = "500 mg"
-  description = "Created during API testing."
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Uri "$baseUrl/api/products" `
-  -Method Post `
-  -Headers $headers `
-  -ContentType "application/json" `
-  -Body $productBody
-```
-
-## Challenges encountered
-
-1. **Backend moved into the repository**
-   - The backend was initially outside the Git repository.
-   - A repository-root solution was created at `Lloyd.ProductManagement.sln`.
-   - The solution references `server/Lloyd.ProductManagement.Api.csproj`.
-   - Visual Studio may retain the old path in an already-open session; close and reopen the root solution.
-
-2. **Generated files appeared as Git changes**
-   - A root `.gitignore` was added for `.NET` `bin/` and `obj/` output, Node dependencies, build output, IDE files, logs, and local environment files.
-   - Generated artifacts are not part of the feature commits.
-
-3. **HTTP and HTTPS development profiles**
-   - The HTTP profile listens on port 5240.
-   - `UseHttpsRedirection` can log a warning when only the HTTP profile is running, but the API route still works.
-   - The correct API route must be used instead of the undefined root `/` route.
-
-4. **Authentication secrets and development users**
-   - JWT signing keys and development passwords are supplied through environment variables.
-   - No credentials are committed to Git.
-
-5. **Frontend-to-backend local development**
-   - Vite proxies `/api` requests to the ASP.NET Core server so the React app can call the API without adding a broad CORS policy for local development.
-
-## Git feature history
-
-Feature progress is intentionally separated into focused commits:
-
-```text
-chore: initialize frontend and backend projects
-feat: add categories API and persistence
-chore: automate API launch workflow
-feat: configure database and category API
-feat: implement user authentication
-feat: implement product creation
-feat: implement product retrieval
-feat: implement product update
-feat: implement product deletion
-feat: add product search and filtering
-feat: implement product summary report
-feat: integrate React product management UI
+Set-Location .\client
+npm run lint
+npm run build
+Set-Location ..
+dotnet build .\Lloyd.ProductManagement.sln
 ```
 
 ## Scope and limitations
 
-This is a technical examination project, not a production pharmaceutical system. It intentionally keeps the architecture simple:
-
-- EF Core is used directly through `ApplicationDbContext`.
-- There is no repository/CQRS/MediatR layer.
-- JWT access tokens are stateless and short-lived.
-- Product delete is a direct delete operation.
-- The application uses LocalDB for development.
-- Production secret management, rate limiting, refresh tokens, audit trails, and deployment infrastructure are outside the examination scope.
-
-## Next development considerations
-
-The core requested features are now represented:
-
-- Login
-- Product CRUD
-- Product search/filtering
-- Simple report generation
-- RESTful API
-- React and Ant Design frontend
-
-Before a formal demonstration, verify the LocalDB service, set development environment variables, start the backend first, then start the client and test the login, product operations, and report from the frontend.
+This is a technical examination project, not a production pharmaceutical system. It intentionally uses a simple architecture and does not include production secret management, refresh tokens, audit trails, inventory quantity management, rate limiting, or deployment infrastructure. Product availability is a demonstration status and should not be treated as a real inventory source of truth.

@@ -18,6 +18,8 @@ public sealed class ProductResponse
 
     public string? Description { get; init; }
 
+    public string AvailabilityStatus { get; init; } = "Available";
+
     public bool IsActive { get; init; }
 
     public DateTime CreatedAt { get; init; }

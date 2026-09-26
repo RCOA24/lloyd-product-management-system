@@ -92,10 +92,17 @@
   color: #d8f59f;
 }
 
-.active-status-pill {
+.available-status-pill {
   border: 1px solid #a8df78 !important;
   background: #dff6c8 !important;
   color: #2f7d32 !important;
+  font-weight: 700;
+}
+
+.out-of-stock-status-pill {
+  border: 1px solid #f0b7a4 !important;
+  background: #fff0eb !important;
+  color: #b5472f !important;
   font-weight: 700;
 }
 
