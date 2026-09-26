@@ -72,6 +72,8 @@ The connection string is in `server/appsettings.json`. It does not contain a dat
 
 The existing `InitialCreate` migration defines the Users, Categories, and Products tables. Do not delete or recreate that migration.
 
+On startup, the development seeder adds category reference data and a limited set of generic pharmaceutical entries adapted from the public [Lloyd Laboratories products page](https://lloydlab.com/products/). These records are demonstration data only—not official SKUs, formulations, strengths, or internal product records. Missing source details such as dosage form are explicitly stored as `Not specified`, and seeding is idempotent by product name.
+
 For a fresh database, apply the existing migrations from the repository root:
 
 ```powershell

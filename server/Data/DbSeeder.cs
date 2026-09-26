@@ -13,6 +13,7 @@ public static class DbSeeder
         IPasswordHasher<User> passwordHasher)
     {
         await SeedCategoriesAsync(context);
+        await SeedProductsAsync(context);
         await SeedDevelopmentUserAsync(context, configuration, passwordHasher);
     }
 
@@ -58,6 +59,64 @@ public static class DbSeeder
         };
 
         await context.Categories.AddRangeAsync(categories);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedProductsAsync(ApplicationDbContext context)
+    {
+        var categoryIds = await context.Categories
+            .Where(category => category.IsActive)
+            .ToDictionaryAsync(category => category.Name, category => category.Id);
+        var existingNames = new HashSet<string>(
+            await context.Products.Select(product => product.ProductName).ToListAsync(),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Generic pharmaceutical entries are adapted from the public Lloyd Laboratories
+        // product-capability page for demonstration purposes; they are not official SKUs.
+        var productSeeds = new (string ProductName, string CategoryName)[]
+        {
+            ("Ibuprofen", "Analgesic"),
+            ("Paracetamol", "Analgesic"),
+            ("Tramadol", "Analgesic"),
+            ("Mefenamic Acid", "Analgesic"),
+            ("Naproxen", "Analgesic"),
+            ("Amoxicillin", "Anti-Infective"),
+            ("Ampicillin", "Anti-Infective"),
+            ("Co-Amoxiclav", "Anti-Infective"),
+            ("Ciprofloxacin", "Anti-Infective"),
+            ("Doxycycline Hyclate", "Anti-Infective"),
+            ("Metronidazole", "Anti-Infective"),
+            ("Fluconazole", "Antifungal"),
+            ("Ketoconazole", "Antifungal"),
+            ("Miconazole", "Antifungal"),
+            ("Chlorphenamine Maleate", "Antihistamine"),
+            ("Diphenhydramine HCl", "Antihistamine"),
+            ("Loratadine", "Antihistamine"),
+            ("Ascorbic Acid", "Vitamin"),
+            ("Calcium Ascorbate", "Vitamin"),
+            ("Multivitamins", "Vitamin"),
+            ("Natural Vitamin E", "Vitamin")
+        };
+
+        var products = productSeeds
+            .Where(seed => !existingNames.Contains(seed.ProductName))
+            .Where(seed => categoryIds.ContainsKey(seed.CategoryName))
+            .Select(seed => new Product
+            {
+                ProductName = seed.ProductName,
+                CategoryId = categoryIds[seed.CategoryName],
+                DosageForm = "Not specified",
+                Description = "Publicly listed generic entry included as technical-exam demonstration data.",
+                IsActive = true
+            })
+            .ToList();
+
+        if (products.Count == 0)
+        {
+            return;
+        }
+
+        await context.Products.AddRangeAsync(products);
         await context.SaveChangesAsync();
     }
 
