@@ -85,6 +85,80 @@ public sealed class ProductsController : ControllerBase
         return Created($"/api/products/{product.Id}", response);
     }
 
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<ProductResponse>> UpdateProduct(
+        int id,
+        ProductUpdateRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.ProductName))
+        {
+            ModelState.AddModelError(nameof(request.ProductName), "Product name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.DosageForm))
+        {
+            ModelState.AddModelError(nameof(request.DosageForm), "Dosage form is required.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        var product = await _context.Products
+            .SingleOrDefaultAsync(
+                item => item.Id == id && item.IsActive,
+                cancellationToken);
+
+        if (product is null)
+        {
+            return NotFound(new
+            {
+                message = "Product not found."
+            });
+        }
+
+        var category = await _context.Categories
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                item => item.Id == request.CategoryId && item.IsActive,
+                cancellationToken);
+
+        if (category is null)
+        {
+            return NotFound(new
+            {
+                message = "Active category not found."
+            });
+        }
+
+        product.ProductName = request.ProductName.Trim();
+        product.GenericName = NormalizeOptional(request.GenericName);
+        product.CategoryId = category.Id;
+        product.DosageForm = request.DosageForm.Trim();
+        product.Strength = NormalizeOptional(request.Strength);
+        product.Description = NormalizeOptional(request.Description);
+        product.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(new ProductResponse
+        {
+            Id = product.Id,
+            ProductName = product.ProductName,
+            GenericName = product.GenericName,
+            CategoryId = product.CategoryId,
+            CategoryName = category.Name,
+            DosageForm = product.DosageForm,
+            Strength = product.Strength,
+            Description = product.Description,
+            IsActive = product.IsActive,
+            CreatedAt = product.CreatedAt,
+            UpdatedAt = product.UpdatedAt
+        });
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<ProductResponse>>> GetProducts(
         CancellationToken cancellationToken)
