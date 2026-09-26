@@ -193,6 +193,30 @@ public sealed class ProductsController : ControllerBase
         return Ok(product);
     }
 
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteProduct(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var product = await _context.Products
+            .SingleOrDefaultAsync(
+                item => item.Id == id && item.IsActive,
+                cancellationToken);
+
+        if (product is null)
+        {
+            return NotFound(new
+            {
+                message = "Product not found."
+            });
+        }
+
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
     private static IQueryable<ProductResponse> ProjectProducts(
         IQueryable<Product> products)
     {
