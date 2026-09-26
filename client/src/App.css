@@ -303,9 +303,11 @@
   max-width: 650px;
   margin: 24px 0 18px;
   color: white;
-  font-size: clamp(42px, 6vw, 72px);
-  line-height: 1.02;
-  letter-spacing: -2.8px;
+  font-size: clamp(40px, 5.5vw, 68px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+  word-spacing: 0.08em;
 }
 
 .login-story p,
