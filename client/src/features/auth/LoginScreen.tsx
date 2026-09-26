@@ -44,7 +44,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         <div className="login-story__content">
           <Tag color="cyan">Independent technical project</Tag>
           <Title>Quality information, clearly managed.</Title>
-          <Paragraph>
+          <Paragraph className="login-story-description">
             A focused workspace for maintaining pharmaceutical product records,
             monitoring categories, and generating useful inventory summaries.
           </Paragraph>

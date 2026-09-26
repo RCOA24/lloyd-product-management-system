@@ -308,9 +308,10 @@
   letter-spacing: -2.8px;
 }
 
-.login-story p {
+.login-story p,
+.login-story__content .ant-typography {
   max-width: 610px;
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: clamp(16px, 2vw, 20px);
 }
 
