@@ -1,4 +1,4 @@
-import type { ProductSummaryReport } from './api'
+import type { ProductSummaryReport } from '../api'
 
 function escapeCsv(value: string | number): string {
   const text = String(value)
