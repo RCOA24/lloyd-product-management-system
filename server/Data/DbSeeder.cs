@@ -1,11 +1,22 @@
 using Lloyd.ProductManagement.Api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Lloyd.ProductManagement.Api.Data;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(ApplicationDbContext context)
+    public static async Task SeedAsync(
+        ApplicationDbContext context,
+        IConfiguration configuration,
+        IPasswordHasher<User> passwordHasher)
+    {
+        await SeedCategoriesAsync(context);
+        await SeedDevelopmentUserAsync(context, configuration, passwordHasher);
+    }
+
+    private static async Task SeedCategoriesAsync(ApplicationDbContext context)
     {
         if (await context.Categories.AnyAsync())
         {
@@ -47,6 +58,37 @@ public static class DbSeeder
         };
 
         await context.Categories.AddRangeAsync(categories);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedDevelopmentUserAsync(
+        ApplicationDbContext context,
+        IConfiguration configuration,
+        IPasswordHasher<User> passwordHasher)
+    {
+        var username = configuration["SeedAdmin:Username"]?.Trim();
+        var password = configuration["SeedAdmin:Password"];
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            return;
+        }
+
+        if (await context.Users.AnyAsync())
+        {
+            return;
+        }
+
+        var user = new User
+        {
+            Username = username,
+            FullName = "System Administrator",
+            Role = "Admin",
+            IsActive = true
+        };
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
+
+        await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
     }
 }
